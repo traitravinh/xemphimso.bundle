@@ -87,8 +87,9 @@ def Category(title, catelink):
 @route('/video/xemphimso/server')
 def Server(title, svlink, svthumb, inum):
     oc = ObjectContainer(title2=title)
-    # link = HTTP.Request(svlink,cacheTime=3600).content
-    link = BeautifulSoup(HTTP.Request(svlink,cacheTime=3600).content)('a',{'class':'btn-watch'})[0]['href']
+    link = HTTP.Request(svlink,cacheTime=3600).content
+    ptag = re.compile('<p class="bt">(.+?)</p>').findall(link)[0]
+    link = BeautifulSoup(ptag)('a',{'class':'btn-watch'})[0]['href']
     try:
         for e in BeautifulSoup(str(BeautifulSoup(HTTP.Request(link,cacheTime=3600).content)('td',{'class':'listep'})[0]))('a'):
             esoup = BeautifulSoup(str(e))
@@ -161,9 +162,17 @@ def PlayVideo(url):
         return IndirectResponse(VideoClipObject, key=url)
 
 def videolinks(url):
-    Log(url)
     link = HTTP.Request(url,cacheTime=3600).content
-    vlinks = re.compile('urlplayer = "(.+?)&play').findall(link)[0]
-    return vlinks
+    vlinks = re.compile('urlplayer = "(.+?)&pre').findall(link)[0]
+    subvlinks = HTTP.Request(vlinks,cacheTime=3600).content
+    filelink = re.compile('"file":"(.+?),"label"').findall(subvlinks)
+    if len(filelink)==0:
+        filelink = re.compile('"file":"(.+?)","').findall(subvlinks)
+
+    if len(filelink)>1:
+        flinks = filelink[len(filelink)-1].replace('\\','').strip('"')
+    else:
+        flinks = filelink[0].replace('\\','').strip('"')
+    return flinks
 
 ####################################################################################################
