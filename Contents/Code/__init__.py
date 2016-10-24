@@ -147,13 +147,12 @@ def createMediaObject(url, title,thumb,rating_key,include_container=False,includ
 @indirect
 def PlayVideo(url):
     url = videolinks(url)
+    Log(url)
     if str(url).find('youtube')!=-1:
         oc = ObjectContainer(title2='Youtube Video')
-        # idregex = r'https?://www.youtube.com/(?:embed/|watch\?v=)'+r'(.+?(?=\?)|.+)'
-        # VideoUrl = re.compile(idregex).findall(url)[0]
-        # url='https://www.youtube.com/watch?v='+VideoUrl
+        nurl = url.replace('watch?v=','v/')
         oc.add(VideoClipObject(
-            url=url,
+            url=nurl,
             title='Youtube video',
             thumb=R(DEFAULT_ICO)
         ))
@@ -162,9 +161,12 @@ def PlayVideo(url):
         return IndirectResponse(VideoClipObject, key=url)
 
 def videolinks(url):
+    # Log(url)
     link = HTTP.Request(url,cacheTime=3600).content
-    vlinks = re.compile('urlplayer = "(.+?)&pre').findall(link)[0]
+    # vlinks = re.compile('urlplayer = "(.+?)&pre').findall(link)[0]
+    vlinks = re.compile('}</script><script type="text/javascript" src="(.+?)"></script></div>').findall(link)[0]
     subvlinks = HTTP.Request(vlinks,cacheTime=3600).content
+    # Log(subvlinks)
     filelink = re.compile('"file":"(.+?),"label"').findall(subvlinks)
     if len(filelink)==0:
         filelink = re.compile('"file":"(.+?)","').findall(subvlinks)
